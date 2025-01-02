@@ -1,0 +1,221 @@
+---
+title: "Kod Igor"
+author: "Igor Gryzło"
+date: "2023-03-12"
+output: word_document
+---
+
+```{r}
+if(!require(knitr))install.packages("knitr")
+library(knitr)
+```
+
+```{r}
+library(readxl)
+```
+
+
+```{r}
+DaneIG <- read_excel("C:fakepath/DaneIG.xlsx")
+```
+
+Model Regresji cen mieszkań we Wrocławiu
+
+1. Uzasadnienie wyboru modelu i wyjaśnienie jego elementów
+ Wybrałem dane opisujące ceny mieszkań we Wrocławiu z powodu mojego zainteresowania
+rynkiem nieruchomości, od dłuższego czasu śledzę trendy zachodzące na rynku mieszkań. W
+moich danych posiadam 3 zmienne:
+ „Lata użytkowania budynku” – określają ile lat minęło od wybudowania budynku
+ „Odległość od Centrum” – określa drogę od rynku głównego we Wrocławiu wyrażoną
+w kilometrach.
+ „Metraż” - określa wielkość mieszkania wyrażoną w metrach kwadratowych.
+Wybrałem te dane, ponieważ takie dane są najbardziej istotnymi kryteriami wyboru
+mieszkania, co znacząco odbija się na jego cenie – Lata użytkowania określają stopień zużycia
+budynku i infrastruktury, odległość od centrum wpływa na dojazd (czas) do
+najpotrzebniejszych miejsc w życiu codziennym a metraż wpływa na komfort użytkowania.
+Źródło: https://www.otodom.pl
+Przygotowania danych polegało na odrzuceniu tych w których nie znałem dokładniej
+lokalizacji lub data budowy budynku nie była wyszczególniona w ogłoszeniu. 
+
+2. Analiza dopasowania modelu
+Wykres zależności Ceny i okresu użytkowania budynku: 
+
+```{r}
+plot(DaneIG$Cena~DaneIG$`Lata użytkowania budynku`)
+ModelL<- lm(DaneIG$Cena~DaneIG$`Lata użytkowania budynku`)
+abline(ModelL$coef,lty=5)
+```
+
+Dla tej zmiennej występuję zależność liniowa ujemna, oznacza to, że wraz ze wzrostem lat użytkowania cena
+mieszkania spada.
+
+```{r}
+plot(DaneIG$Cena~DaneIG$`Odległość od centrum`)
+ModelO<- lm(DaneIG$Cena~DaneIG$`Odległość od centrum`)
+abline(ModelO$coef,lty=5)
+```
+Dla tej zmiennej występuje również zależność liniowa ujemna, oznacza to, że wraz ze wzrostem odległości od
+centrum cena mieszkania maleje. 
+
+```{r}
+plot(DaneIG$Cena~DaneIG$`Metraż`)
+ModelM<- lm(DaneIG$Cena~DaneIG$`Metraż`)
+abline(ModelM$coef,lty=5)
+```
+
+Dla tej zmiennej występuje zależność liniowa dodatnia, oznacza to, że wraz ze wzrostem metrażu cena
+mieszkania również się zwiększa.
+Z racji tego, że w tym modelu wszystkie zmienne są dobrze dopasowane (p-value poniżej 0,05) Nie
+zdecydowałem się na dodawanie dodatkowych zmiennych i transformowanie zmiennych. 
+
+```{r}
+row.names(DaneIG)
+ModelX <- lm(Cena~`Lata użytkowania budynku`+`Odległość od centrum`+`Metraż`,data=DaneIG)
+summary(ModelX)
+
+```
+Analiza macierzy korelacji:
+ Cena-Lata użytkowania - umiarkowana korelacja ujemna
+ Cena-Odległość od centrum – słaba korelacja ujemna
+ Cena-Metraż – umiarkowana korelacja dodatnia 
+```{r}
+cor_matrix <- cor(DaneIG)
+print(cor_matrix)
+```
+Ocena występowania problemu współliniowości – Powyższy wykres dodatkowo pozawala nam ocenić
+współliniowość, w tym celu musimy się skupić na korelacji między zmiennymi objaśniającymi. Jeśli któraś z
+tych wartości wynosiłaby powyżej 0,7 lub poniżej -0,7 moglibyśmy zaobserwować taki problem. W przypadku
+tych danych on nie występuje. 
+
+3. Porównanie Modeli:
+ Ocena sensowności znaków oszacowanych parametrów – Korzystając z poniższego screena można
+zauważyć, że wszystkie znaki i wartości parametrów są prawidłowe. (Metraż mieszkań zwiększa ich
+cenę a większa odległość od centrum i wiekowość budynku ją obniża) Oznacza to, że według tej
+metody wszystkie modele są równie precyzyjne. 
+```{r}
+#Model ze wszystkimi zmiennymi
+coef(ModelX)
+summary(ModelX)
+
+#Model bez zmiennej "Metraż"
+Model1 <- lm(Cena~`Lata użytkowania budynku`+`Odległość od centrum`,data=DaneIG)
+coef(Model1)
+summary(Model1)
+
+
+#Model bez zmiennej "Odległość od Centrum"
+Model2 <- lm(Cena~`Lata użytkowania budynku`+`Metraż`,data=DaneIG)
+coef(Model2)
+summary(Model2)
+
+#Model bez zmiennej "Lata użytkowania budynku"
+Model3 <- lm(Cena~`Odległość od centrum`+`Metraż`,data=DaneIG)
+coef(Model3)
+summary(Model3)
+
+```
+Z kolejnych screenów (u góry) wynika, że Pierwotny model jest najlepiej dopasowany.
+Ponieważ P-value mają prawie najniższe wartości – oznacza to, że dane bardzo dobrze opisują
+model. Dodatkowo w 1 modelu wartości Ve i R^2 są najwyższe co oznacza, że model najlepiej opisuje
+dane. Podsumowując wybieram model nr. 1 ze wszystkimi zmiennymi. 
+```{r}
+#interpretacja parametrów i testów
+summary(ModelX)
+```
+4. Analiza otrzymanych wyników empirycznych
+ Interpretacja parametrów: (summary dla modelu z 3 zmiennymi na screenie u góry)
+o P-Value – im mniejszą wartość przyjmuje tym zmienna lepiej opisuje model, przyjmujemy, że
+te poniżej 0,05 są istotne statystycznie.
+o Błąd standardowy (Std. Error) – oznacza ile średnio myli się model dla każdej zmiennej na
+plus lub minus
+o Residual standard error (Błąd standardowy reszt): Wartość błędu standardowego reszt
+wynosi 111.5 na 21 stopniach swobody. Błąd standardowy reszt służy do oceny jakości
+prognoz modelu. Im niższa wartość, tym lepsza prognoza.
+ Interpretacja testów:
+o Test T i Test F: summary również pokazuję 2 wartości które używane są w tym teście, w
+modelu p-value wynosi 0,003149 co oznacza to, że grupa zmiennych jest istotna dla modelu,
+ponadto F-Statistics wynosi 6,8 co również świadczy o dobrym dopasowaniu modelu.
+ Analiza miar dopasowania – Im większa wartość R^2 tym lepsze dopasowanie modelu. W przypadku
+tego modelu wynosi 0.4749. Adjusted R^2 uwzględnia liczbę zmiennych niezależnych w modelu im
+mniejszy tym więcej niezależnych w modelu 0,3999. 
+5. Diagnostyka Reszt
+ Wykres Reszt: 
+```{r}
+par(mfrow=c(2,1))
+plot(ModelX$res,ylab="Residuals",main="Index plot of residuals")
+abline(h=0,col="red")
+plot(ModelX$fit,ModelX$res,xlab="Fitted",ylab="Residuals")
+abline(h=0,col="red")
+```
+Na wykresie można zaobserwować wartości oscylujące wokół zera. W Okolicach indeksu 12 można zaobserwować
+skok co może oznaczać, że model jest zakłócony przez wyjątkowe wartości.
+ Wykres Kwantyl-Kwantyl – na wykresie można zaobserwować punkty które są blisko prostej,
+oznacza to, że rozkład reszt jest normalny. 
+
+```{r}
+par(mfrow=c(1,1))
+qqnorm(ModelX$res,ylab="Residuals")
+qqline(ModelX$res)
+```
+Test niezależności
+```{r}
+library(randtests)
+runs.test(ModelX$res)
+```
+Z tego testu możemy zaobserwować, że p-value wynosi 0.03688, oznacza to, że istnieje mniej niż
+3,7% szansy, że reszty są niezależne. Zważając na poziom istotności 0,05 mamy wystarczające
+dowody aby odrzucić hipotezę o niezależności reszt. Wartość statistic oznacza, że nasze dane nie
+są niezależne więc weźmiemy pod uwagę 3 inne modele (z 1 wyrzucona zmienna).
+```{r}
+#porównanie modeli pod kątem niezależności
+runs.test(ModelX$res)
+runs.test(Model1$res)
+runs.test(Model2$res)
+runs.test(Model3$res)
+```
+Z powyższego screena można wywnioskować, że najbardziej niezależne reszty posiada model
+2 i 3. W tym wypadku wybieram do dalszej kontynuacji projektu Model nr 3 czyli z
+wykluczoną Lata użytkowania budynku.
+
+6. Zastosowanie Modelu:
+ Określenie współczynników dla danych zmiennych
+ Wyliczenie przewidywanej ceny (może się różnić o odchylenie standardowe)
+
+
+```{r}
+#6. Zastosowanie modelu
+
+names(Model3)
+Model3$coefficients
+
+beta_0<- ModelX$coefficients['(Intercept)']
+beta_Metraż<- ModelX$coefficients['Metraż']
+beta_Odległość<- Model3$coefficients['`Odległość od centrum`']
+
+#Wyliczanie Przewidywanej ceny dla poszczególnych metraży
+
+our_forecast<- beta_0+beta_Metraż*67+beta_Odległość*10
+our_forecast1<- beta_0+beta_Metraż*43+beta_Odległość*10
+#Przewidywana cena dla mieszkania oddalonego o 10 km od centrum i powierzchni 67 metry kwadratowe
+print(our_forecast)
+#Przewidywana cena dla mieszkania oddalonego o 10 km od centrum i powierzchni 43 metrów kwadratowych 
+print(our_forecast1)
+```
+7. Analiza i wykluczenie wartości odstających
+```{r}
+#Analiza Outliers
+jack <- rstudent(Model3)
+plot(jack,ylab="Jacknife Residuals",main="Jacknife Residuals")
+jack[abs(jack)==max(abs(jack))]
+
+#Usunięcie zmiennej 12 i porównanie modeli
+
+cook <- cooks.distance(Model3)
+Model3_Sub <- lm(Model3, data = DaneIG, subset = -12)
+
+summary(Model3_Sub)
+summary(Model3)
+```
+Z wykresu i tekstu w konsoli wynika, ze index 12 jest wartością odstającą.
+Porównanie wyników po wyrzuceniu zmiennej 12. 
+Powyższy screen pokazuję, że usunięcie danej 12 znacząco poprawiło dopasowanie modelu i p-value. 
