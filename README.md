@@ -39,7 +39,8 @@
 * Analyzed and visualized residuals to ensure robustness of the model.
 
 ## Files:
-* **R Code**: Provided in this repo for reproducibility.
-* **Visualizations**: Included as outputs in the repository.
-
-## This project provided valuable insights into factors influencing apartment prices in Wrocław and demonstrated the application of linear regression in R for real estate analysis. Feel free to explore the code and datasets in the repository!
+* **Code HousCosts**: Provided in this repo for reproducibility.
+* **Plots and results Analysis**: Breakdown of all results for my lecturer.
+* **Code Breakdown**: Code I used with detailed descriptions.
+* **DataIG**: Data that was gathered and used for this project.
+## This is the end of this project, I hope you enjoyed it as much as I did!
